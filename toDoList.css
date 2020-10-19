@@ -1,0 +1,101 @@
+.flex-container-column{
+	display: flex;
+	flex-flow: column wrap;
+	width: 50%;
+	margin: 15% 25%;
+	padding: 1%;
+	border: 1px solid black;
+}
+
+.flex-container-row {
+	display: flex;
+	flex-flow: row wrap;
+	justify-content: space-between;	
+	margin-top: 1%;
+}
+
+.heading {
+  margin: 1%;
+  padding: 1%;
+  text-align: center;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: 0.5px;
+  font-weight: normal;
+  text-transform: uppercase;
+  color: black;
+}
+
+.form-input{
+	width: 80%;
+}
+
+.form-priority-selector{
+	width: 10%;
+}
+
+.form-button-add{
+	width: 5%;
+	border-radius: 2px;
+}
+
+.priorityfilters{
+	width: 79%;
+	padding: 1%;
+}
+
+.datefilter-button-sort{
+	width: 20%;
+}
+
+.datefilter{
+	width: 15%;
+}
+
+.datefilter-label {
+	display:inline-block;
+	margin: 5% 1%;
+}
+
+.filter-checkbox{
+	padding: 1%;
+}
+
+.checkbox-label{
+	margin-bottom: 5%;
+}
+
+.todolist {
+	width: 95%;
+	list-style: none;
+	counter-reset: todos;
+	border: 1px solid black;
+	 overflow-y: scroll;
+}
+
+.todolist li {
+	flex: 1 1 auto;
+	margin: 1% 5%;
+	padding: 5% 1%;
+	border: 1px solid black;
+}
+
+.todolist li::before {
+	counter-increment: todos;
+	content: counter(todos);
+	border: 1px solid black;
+	border-radius: 50px;
+}
+
+.task-text{
+	width: 80%;
+}
+
+.task-checkbox{
+	
+}
+
+.task-button-delete{
+	width: 5%;
+	border-radius: 2px;
+}
