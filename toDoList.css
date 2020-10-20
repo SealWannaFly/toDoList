@@ -91,7 +91,21 @@
 	width: 80%;
 }
 
-.task-checkbox{
+.task-creation-date{
+	width: 40%;
+	margin: 0 3%;
+}
+
+.task-result-date{
+	width: 40%;
+	margin: 0 5%;
+}
+
+.task-done-checkbox{
+	
+}
+
+.task-cancel-checkbox{
 	
 }
 

@@ -8,9 +8,9 @@
 <body>
 <div class="flex-container-column">
     <h1 class="heading">Список задач</h1>
-	<form class="flex-container-row">
-		 <input class="form-input" type="text">
-		 <select class="form-priority-selector"> 
+	<form name="addTask" class="flex-container-row" action="" method="POST">
+		 <input name="text" class="form-input" type="text">
+		 <select name="priority" class="form-priority-selector"> 
 			 <option>High</option>
 			 <option>Medium</option>
 			 <option>Low</option>
@@ -32,25 +32,13 @@
 	</div>
 	
 	<ol class="todolist">
-		<li class="flex-container-row">
-			 <label class="task-text">Договориться о встречи</label>
-			 <input class="task-checkbox" type="checkbox">
-			 <input class="task-button-delete" type="image" src="resourses/images/button_delete.png">
-		 </li>
 		 <li class="flex-container-row">
 			 <label class="task-text">Купить пингвина</label>
-			 <input class="task-checkbox" type="checkbox">
+			 <input class="task-done-checkbox" type="checkbox">
+			 <input class="task-cancel-checkbox" type="checkbox">
 			 <input class="task-button-delete" type="image" src="resourses/images/button_delete.png">
-		 </li>
-		 <li class="flex-container-row">
-			 <label class="task-text">Выспаться</label>
-			 <input class="task-checkbox" type="checkbox">
-			 <input class="task-button-delete" type="image" src="resourses/images/button_delete.png">
-		 </li>
-		 <li class="flex-container-row">
-			 <label class="task-text">Сходить в ресторан</label>
-			 <input class="task-checkbox" type="checkbox">
-			 <input class="task-button-delete" type="image" src="resourses/images/button_delete.png">
+			 <label class="task-creation-date">20/15/2015 23:13</label>
+			 <label class="task-result-date">Cancelled at 21/15/2015 23:10</label>
 		 </li>
 	</ol>
 </div>
