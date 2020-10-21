@@ -8,8 +8,8 @@
 <body>
 <div class="flex-container-column">
     <h1 class="heading">Список задач</h1>
-	<form name="addTask" class="flex-container-row" action="" method="POST">
-		 <input name="text" class="form-input" type="text">
+	<form class="flex-container-row" action="http://127.0.0.1:3000/items" method="POST">
+		 <input name="input_text" class="form-input" type="text">
 		 <select name="priority" class="form-priority-selector"> 
 			 <option>High</option>
 			 <option>Medium</option>
@@ -32,7 +32,7 @@
 	</div>
 	
 	<ol class="todolist">
-		 <li class="flex-container-row">
+		 <li class="task flex-container-row">
 			 <label class="task-text">Купить пингвина</label>
 			 <input class="task-done-checkbox" type="checkbox">
 			 <input class="task-cancel-checkbox" type="checkbox">
