@@ -1,9 +1,3 @@
-class Task{
-	constructor(){
-		
-	}
-}
-
 let list = document.querySelector('.todolist');
 
 function updateListHeight() {
@@ -19,56 +13,38 @@ function updateListHeight() {
 	}
 }
 
-function createTask (input_text) {
-	let newTask = document.createElement('li');
-	newTask.classList.add('task');
-	newTask.classList.add('flex-container-row');
+async function getPostResponse(formData){
+	let response = await fetch('http://127.0.0.1:3000/items', {
+		method: 'POST',
+		body: formData
+	});
 	
-	let taskText = document.createElement('label');
-	taskText.classList.add('task-text');
-	taskText.textContent = input_text;
-	newTask.appendChild(taskText);
-	
-	let doneCheckbox = document.createElement('input');
-	doneCheckbox.classList.add('task-done-checkbox');
-	doneCheckbox.setAttribute('type', 'checkbox');
-	newTask.appendChild(doneCheckbox);
-	
-	let cancelCheckbox = document.createElement('input');
-	cancelCheckbox.classList.add('task-cancel-checkbox');
-	cancelCheckbox.setAttribute('type', 'checkbox');
-	newTask.appendChild(cancelCheckbox);
-	
-	let taskButtonDelete = document.createElement('input');
-	taskButtonDelete.classList.add('task-button-delete');
-	taskButtonDelete.setAttribute('type', 'image');
-	taskButtonDelete.setAttribute('src', 'resourses/images/button_delete.png');
-	newTask.appendChild(taskButtonDelete);
-	
-	let creationDate = document.createElement('label');
-	creationDate.classList.add('task-creation-date');
+	let content = await response.json();
+	let id = parseInt(JSON.stringify(content.id));
+
+	createTask(formData, id);
+}
+
+function createTask(formData, taskId){
 	let now = new Date();
-	creationDate.textContent = `${now.getDate()}/${now.getMonth()}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
-	newTask.appendChild(creationDate);
-	
-	let resultDate = document.createElement('label');
-	resultDate.classList.add('task-result-date');
-	resultDate.textContent = '';
-	newTask.appendChild(resultDate); 
-	
-	return newTask;
+
+	list.innerHTML += 
+	     `<li class="task flex-container-row ${formData.get('priority')}" id=${taskId}>
+		 <label class="task-text">${formData.get('task')}</label>
+			 <input class="task-button task-button-done" type="image" src="resourses/images/button_done.png">
+			 <input class="task-button task-button-cancel" type="image" src="resourses/images/button_cancel.png">
+			 <input class="task-button task-button-delete" type="image" src="resourses/images/button_delete.png">
+			 <label class="task-creation-date">${now.getDate()}/${now.getMonth()}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}</label>
+			 <label class="task-result-date"></label>
+		 </li>`;
 }
 
 let addForm = document.forms[0];
-addForm.onsubmit = function (event){
+
+addForm.addEventListener('submit', function (event){
 	event.preventDefault();
 	
-	let taskText = addForm.elements.input_text;
+	let formData = new FormData(this);
 
-	let newTask = createTask(taskText.value);
-	list.append(newTask);
-	
-	updateListHeight();
-	
-	return false;
-}
+	getPostResponse(formData);
+});

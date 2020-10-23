@@ -101,16 +101,15 @@
 	margin: 0 5%;
 }
 
-.task-done-checkbox{
-	
-}
-
-.task-cancel-checkbox{
-	
-}
-
-.task-button-delete{
+.task-button{
 	width: 5%;
 	border-radius: 2px;
-	background: url(button_delete.png);
+}
+
+.task-done{
+	border: 1px solid green;
+}
+
+.task-canceled{
+	border: 1px solid red;
 }
