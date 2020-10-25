@@ -77,7 +77,6 @@
 	flex: 1 1 auto;
 	margin: 1% 5%;
 	padding: 5% 1%;
-	border: 1px solid black;
 }
 
 .todolist li::before {
@@ -85,6 +84,10 @@
 	content: counter(todos);
 	border: 1px solid black;
 	border-radius: 50px;
+}
+
+.task{
+	border: 2px solid black;
 }
 
 .task-text{
@@ -107,9 +110,9 @@
 }
 
 .task-done{
-	border: 1px solid green;
+	border: 2px solid green;
 }
 
 .task-canceled{
-	border: 1px solid red;
+	border: 2px solid red;
 }
