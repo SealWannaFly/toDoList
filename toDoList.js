@@ -1,4 +1,6 @@
 let list = document.querySelector('.todolist');
+let filters = document.querySelectorAll('.filter-checkbox');
+let datesort = document.querySelectorAll('.datefilter-button-sort');
 
 function updateListHeight() {
 	let tasks = list.querySelectorAll('.task');
@@ -67,19 +69,24 @@ async function getDeleteResponse(task){
 	}
 }
 
+function formatTime(datetime){
+	datetime = new Date(datetime);
+	return `${datetime.getDate()}/${datetime.getMonth()+1}/${datetime.getFullYear()} ${datetime.getHours()}:${datetime.getMinutes()}`;
+}
+
 function createTask(taskData, taskId){
 	if(!taskId){
 		taskId  = parseInt(taskData.id);
 	}
 	
 	list.innerHTML += 
-	     `<li class="task flex-container-row ${taskData.priority}" id=${taskId}>
+	     `<li class="task flex-container-row ${taskData.priority.toLowerCase()}" id=${taskId}>
 		 <label class="task-text">${taskData.task}</label>
 			 <input class="task-button task-button-done" type="image" src="resourses/images/button_done.png" onclick="setDone(this);return false;">
 			 <input class="task-button task-button-cancel" type="image" src="resourses/images/button_cancel.png" onclick="setCanceled(this);return false;">
 			 <input class="task-button task-button-delete" type="image" src="resourses/images/button_delete.png" onclick="taskDelete(this);return false;">
-			 <label class="task-creation-date">${taskData.creationDate}</label>
-			 <label class="task-result-date"></label>
+			 <time class="task-creation-date" datetime="${taskData.creationDate}">${formatTime(taskData.creationDate)}</time>
+			 <time class="task-result-date"></time>
 		 </li>`;
 		 
 	updateListHeight()
@@ -92,7 +99,7 @@ addForm.addEventListener('submit', function (event){
 	
 	let formData = new FormData(addForm);
 	let now = new Date();
-	formData.append('creationDate', `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`);
+	formData.append('creationDate', now);
 	
 	let taskData = {};
 	formData.forEach(function(value, key){
@@ -108,12 +115,14 @@ addForm.addEventListener('submit', function (event){
  
  function setDone(btn){
 	 let task = btn.closest('.task');
-	 task.classList.remove('task-canceled');
-	 task.classList.toggle('task-done');
 	 
-	 if(task.classList.contains('task-done')){
+	 task.classList.remove('canceled');
+	 task.classList.toggle('done');
+	 
+	 if(task.classList.contains('done')){
 		let now = new Date();
-		task.lastElementChild.textContent = `Done at ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+		task.lastElementChild.setAttribute('datetime', now);
+		task.lastElementChild.textContent = `Done at ${formatTime(now)}`;
 	 }else{
 		task.lastElementChild.textContent = '';
 	 }
@@ -121,12 +130,13 @@ addForm.addEventListener('submit', function (event){
 
 function setCanceled(btn){
 	let task = btn.closest('.task');
-	task.classList.remove('task-done');
-	task.classList.toggle('task-canceled');
+	task.classList.remove('done');
+	task.classList.toggle('canceled');
 	
-	if(task.classList.contains('task-canceled')){
+	if(task.classList.contains('canceled')){
 		let now = new Date();
-		task.lastElementChild.textContent = `Canceled at ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+		task.lastElementChild.setAttribute('datetime', now);
+		task.lastElementChild.textContent = `Canceled at ${formatTime(now)}`;
 	}else{
 		task.lastElementChild.textContent = '';
 	}
@@ -136,4 +146,82 @@ function taskDelete(btn){
 	let task = btn.closest('.task');
 
 	getDeleteResponse(task)
+}
+
+function resetFilters(tasks){	
+	for (i = 0; i < tasks.length; i++){
+		tasks[i].classList.remove('hidden');
+	}
+}
+
+function filterList(){	
+    let tasks = list.querySelectorAll('.task');
+	
+	resetFilters(tasks);
+	
+	for (i = 0; i < tasks.length; i++){
+		for (j = 0; j < filters.length; j++){
+			if (filters[j].checked){
+				let filterParameter = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
+				
+				if(!tasks[i].classList.contains(filterParameter)){
+					tasks[i].classList.add('hidden');
+				}
+			}
+		}
+	}
+}
+
+function compareByDate(a, b){
+	a = new Date(a.querySelector('.task-creation-date').getAttribute('datetime'));
+	b = new Date(b.querySelector('.task-creation-date').getAttribute('datetime'));
+	
+	if (a-b > 0) {
+		return 1;
+	}else if (a-b === 0){
+		return 0;
+	}else{
+		return -1;
+	}	
+}
+
+function sort(tasks, asc){
+	let sorted = false;
+	let buf;
+	
+	tasks = Array.from(tasks);
+	
+	while(!sorted){
+		sorted = true;
+
+		for (i = 0; i < tasks.length-1; i++){
+			if (compareByDate(tasks[i], tasks[i+1]) < 0){
+				sorted = false;
+				buf = tasks[i];
+				tasks[i] = tasks[i+1];
+				tasks[i+1] = buf;
+			}
+		}
+	}
+	
+	if (!asc){
+		tasks = tasks.reverse();
+	}
+	
+	return tasks;
+}
+
+let asc = true;
+function sortByDate(){
+	let tasks = document.querySelectorAll('.task');
+	
+	tasks = sort(tasks, asc); 
+	console.log(asc);
+	console.log(tasks);
+	list.innerHTML = '';
+	for (i = 0; i < tasks.length; i++){
+		list.append(tasks[i]);
+	}
+	
+	asc = !asc;
 }

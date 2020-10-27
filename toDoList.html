@@ -20,19 +20,18 @@
 
 	<div class="flex-container-row">
 		<div class="priorityfilters">
-			 <input class="filter-checkbox" type="checkbox" ><label class="checkbox-label">Completed</label>
-			 <input class="filter-checkbox" type="checkbox"><label class="checkbox-label">High</label>
-			 <input class="filter-checkbox" type="checkbox"><label class="checkbox-label">Medium</label>
-			 <input class="filter-checkbox" type="checkbox"><label class="checkbox-label">Low</label>
+			 <input class="filter-checkbox" type="checkbox" id="filter-done" onchange="filterList();"><label class="checkbox-label" for="filter-done">Done</label>
+			 <input class="filter-checkbox" type="checkbox" id="filter-high" onchange="filterList();"><label class="checkbox-label" for="filter-high">High</label>
+			 <input class="filter-checkbox" type="checkbox" id="filter-medium" onchange="filterList();"><label class="checkbox-label" for="filter-medium">Medium</label>
+			 <input class="filter-checkbox" type="checkbox" id="filter-low" onchange="filterList();"><label class="checkbox-label" for="filter-low">Low</label>
 		</div>
 		<div class="datefilter">
-		     <input class="datefilter-button-sort" type="image" src="resourses/images/button_sort.png">
-			 <label class="datefilter-label">Date</label>
+		     <input class="datefilter-button-sort" type="image" id="datefilter" src="resourses/images/button_sort.png" onclick="sortByDate(); return false;">
+			 <label class="datefilter-label" for="datefilter">Date</label>
 		</div>
 	</div>
 	
-	<ol class="todolist">
-	</ol>
+	<ol class="todolist"></ol>
 </div>
 
 <script src="toDoList.js"></script>

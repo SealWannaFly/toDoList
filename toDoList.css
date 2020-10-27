@@ -109,10 +109,14 @@
 	border-radius: 2px;
 }
 
-.task-done{
+.done{
 	border: 2px solid green;
 }
 
-.task-canceled{
+.canceled{
 	border: 2px solid red;
+}
+
+.hidden {
+  display: none;
 }
