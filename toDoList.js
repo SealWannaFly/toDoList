@@ -50,16 +50,10 @@ async function getPostResponse(taskData){
 }
 
 async function getDeleteResponse(task){
-	let itemId = {
-		id: task.getAttribute('id')
-	};
+	let itemId = task.getAttribute('id');
 	
-	let response = await fetch('http://127.0.0.1:3000/items/:itemId', {
+	let response = await fetch(`http://127.0.0.1:3000/items/${itemId}`, {
 		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json;charset=utf-8'
-		},
-		body: JSON.stringify(itemId)
 	});
 	
 	if (response.ok){
@@ -69,9 +63,33 @@ async function getDeleteResponse(task){
 	}
 }
 
+async function getPutResponse(task, label, oldLabel){
+	let itemId = task.getAttribute('id');
+	
+	let response = await fetch(`http://127.0.0.1:3000/items/${itemId}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json;charset=utf-8'
+		},
+		body: taskToJson(task)
+	});
+	
+	if (!response.ok){
+		if (label && oldlabel){
+			label.textContent = oldLabel;
+		}
+		
+		alert('Ошибка');
+	}
+}
+
 function formatTime(datetime){
-	datetime = new Date(datetime);
-	return `${datetime.getDate()}/${datetime.getMonth()+1}/${datetime.getFullYear()} ${datetime.getHours()}:${datetime.getMinutes()}`;
+	if(datetime){
+		datetime = new Date(datetime);
+		return `${datetime.getDate()}/${datetime.getMonth()+1}/${datetime.getFullYear()} ${datetime.getHours()}:${datetime.getMinutes()}`;
+	}else{
+		return '';
+	}
 }
 
 function createTask(taskData, taskId){
@@ -79,17 +97,26 @@ function createTask(taskData, taskId){
 		taskId  = parseInt(taskData.id);
 	}
 	
+	let resultText = '';
+	
+	if (taskData.taskResult.toLowerCase() === 'done'){
+		resultText = 'Done at ';
+	}else if(taskData.taskResult.toLowerCase() === 'canceled'){
+		resultText = 'Canceled at ';
+	}
+	
 	list.innerHTML += 
-	     `<li class="task flex-container-row ${taskData.priority.toLowerCase()}" id=${taskId}>
-		 <label class="task-text">${taskData.task}</label>
+	     `<li class="task flex-container-row ${taskData.priority.toLowerCase()} ${taskData.taskResult.toLowerCase()}" id=${taskId}>
+		     <input class="input hidden" type="text" onblur="editTask(this);" onchange="editTask(this);">
+		     <label class="task-text" onclick="changeTask(this);return false;">${taskData.task}</label>
 			 <input class="task-button task-button-done" type="image" src="resourses/images/button_done.png" onclick="setDone(this);return false;">
 			 <input class="task-button task-button-cancel" type="image" src="resourses/images/button_cancel.png" onclick="setCanceled(this);return false;">
 			 <input class="task-button task-button-delete" type="image" src="resourses/images/button_delete.png" onclick="taskDelete(this);return false;">
 			 <time class="task-creation-date" datetime="${taskData.creationDate}">${formatTime(taskData.creationDate)}</time>
-			 <time class="task-result-date"></time>
+			 <time class="task-result-date" datetime="${taskData.resultDate}">${resultText + formatTime(taskData.resultDate)}</time>
 		 </li>`;
 		 
-	updateListHeight()
+	updateListHeight();
 }
 
 let addForm = document.forms.addForm;
@@ -100,11 +127,16 @@ addForm.addEventListener('submit', function (event){
 	let formData = new FormData(addForm);
 	let now = new Date();
 	formData.append('creationDate', now);
+	formData.append('resultDate', '');
+	formData.append('taskResult', '');
 	
 	let taskData = {};
 	formData.forEach(function(value, key){
     taskData[key] = value;
 	});
+	
+	let formInput = addForm.querySelector('.form-input');
+	formInput.value = '';
 	
 	getPostResponse(taskData);
 });
@@ -124,8 +156,11 @@ addForm.addEventListener('submit', function (event){
 		task.lastElementChild.setAttribute('datetime', now);
 		task.lastElementChild.textContent = `Done at ${formatTime(now)}`;
 	 }else{
+		task.lastElementChild.setAttribute('datetime', '');
 		task.lastElementChild.textContent = '';
 	 }
+	 
+	getPutResponse(task);
 };
 
 function setCanceled(btn){
@@ -138,8 +173,11 @@ function setCanceled(btn){
 		task.lastElementChild.setAttribute('datetime', now);
 		task.lastElementChild.textContent = `Canceled at ${formatTime(now)}`;
 	}else{
+		task.lastElementChild.setAttribute('datetime', '');
 		task.lastElementChild.textContent = '';
 	}
+	
+	getPutResponse(task);
 }
 
 function taskDelete(btn){
@@ -216,8 +254,7 @@ function sortByDate(){
 	let tasks = document.querySelectorAll('.task');
 	
 	tasks = sort(tasks, asc); 
-	console.log(asc);
-	console.log(tasks);
+	
 	list.innerHTML = '';
 	for (i = 0; i < tasks.length; i++){
 		list.append(tasks[i]);
@@ -225,3 +262,65 @@ function sortByDate(){
 	
 	asc = !asc;
 }
+
+function taskToJson(task){
+	let obj = new Object();
+	
+	if (task.classList.length > 2){
+		for (let i = 2; i < task.classList.length; i++){
+			let property = task.classList[i];
+			if(property === 'low' || property === 'medium' || property === 'high'){
+				obj.priority = property;
+			}
+			
+			if(property === 'done' || property === 'canceled'){
+				obj.taskResult = property;
+			}
+		}
+	}
+	
+	let doesExistTaskResult = 'taskResult' in obj;
+	if(!doesExistTaskResult){
+		obj.taskResult = '';
+	}
+	
+	let taskText = task.querySelector('.task-text');
+	obj.task = taskText.textContent;
+	
+	let creationDate = task.querySelector('.task-creation-date');
+	obj.creationDate = creationDate.getAttribute('datetime');
+	
+	let resultDate = task.querySelector('.task-result-date');
+	obj.resultDate = resultDate.getAttribute('datetime');
+	
+	console.log(JSON.stringify(obj));
+	return JSON.stringify(obj);
+}
+
+function changeTask(label){
+	let task = label.closest('.task');
+	let input = task.querySelector('.input');
+	
+	label.classList.add('hidden');
+	input.classList.remove('hidden');
+	input.value = label.textContent;
+	input.focus();
+}
+
+function editTask(input){
+	let task = input.closest('.task');
+	let label = task.querySelector('.task-text');
+	let oldLabel = label.textContent;
+	
+		if (input.value !== label.textContent){
+			let ans = confirm('Сохранить изменения?');
+			
+			if(ans){
+				label.textContent = input.value;
+				getPutResponse(task, label, oldLabel);
+			}
+		}
+		
+		label.classList.remove('hidden');
+		input.classList.add('hidden');
+	}
