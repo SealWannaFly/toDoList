@@ -1,84 +1,100 @@
-let list = document.querySelector('.todolist');
-let filters = document.querySelectorAll('.filter-checkbox');
-let datesort = document.querySelectorAll('.datefilter-button-sort');
+const addForm = document.forms.addForm;
+const filters = document.querySelectorAll('.filter-checkbox');
+const list = document.querySelector('.todolist');
+
+const tasks = [];
+
+function updateList(){
+	list.innerHTML = '';
+	for(let i = 0; i < tasks.length; i++){
+		renderTask(tasks[i]);
+	}
+}
 
 function updateListHeight() {
-	let tasks = list.querySelectorAll('.task');
+	let listItems = list.querySelectorAll('.task');
 	
 	// Отображаем по 3 элемента
-	if (tasks.length > 3) {
+	if (listItems.length > 3) {
 		let height = 0;
 		for (i = 0; i < 3; i++) {
-			height = height + tasks[i].offsetHeight;
+			height = height + listItems[i].offsetHeight;
 		}
 		list.style.maxHeight = height+'px';
 	}
 }
 
-async function getGetResponse(){
+function findTaskIndexById(taskId){
+	let foundIndex = tasks.findIndex(item => item.id == taskId);
+	
+	return foundIndex;
+}
+
+async function getTasks(){
 	let response = await fetch('http://127.0.0.1:3000/items');
 	
 	if (response.ok){
 		let content = await response.json();
 		
 		for(let key in content){
-			createTask(content[key]);
+			let task = content[key];
+			tasks.push(task);
+			renderTask(task);
 		}
 	}else{
 		alert('Ошибка при загрузке данных с сервера!');
 	}
 }
 
-async function getPostResponse(taskData){
+async function addTask(task){
 	let response = await fetch('http://127.0.0.1:3000/items', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json;charset=utf-8'
 		},
-		body: JSON.stringify(taskData)
+		body: JSON.stringify(task)
 	});
 	
 
 	if (response.ok){
-		let content = await response.json();
-		let id = parseInt(JSON.stringify(content.id));
+		let result = await response.json();
+		let id = parseInt(result.id);
 		
-		createTask(taskData, id);
+		task.id = id;
+		tasks.push(task);
+		renderTask(task);
 	}else{
 		alert('Ошибка!');
 	}
 }
 
-async function getDeleteResponse(task){
-	let itemId = task.getAttribute('id');
-	
-	let response = await fetch(`http://127.0.0.1:3000/items/${itemId}`, {
+async function deleteTask(taskIndex){
+	let response = await fetch(`http://127.0.0.1:3000/items/${tasks[taskIndex].id}`, {
 		method: 'DELETE',
 	});
 	
 	if (response.ok){
-		task.remove();
+		tasks.splice(taskIndex,1);
+		updateList();
 	}else{
 		alert('Ошибка!');
 	}
 }
 
-async function getPutResponse(task, label, oldLabel){
-	let itemId = task.getAttribute('id');
-	
-	let response = await fetch(`http://127.0.0.1:3000/items/${itemId}`, {
+async function changeTask(task){	
+	let response = await fetch(`http://127.0.0.1:3000/items/${task.id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json;charset=utf-8'
 		},
-		body: taskToJson(task)
+		body: JSON.stringify(task)
 	});
 	
-	if (!response.ok){
-		if (label && oldlabel){
-			label.textContent = oldLabel;
-		}
-		
+	if (response.ok){
+		let taskIndex =  findTaskIndexById(task.id);
+		tasks.splice(taskIndex,1,task);
+		updateList();
+	}else{
 		alert('Ошибка');
 	}
 }
@@ -90,6 +106,30 @@ function formatTime(datetime){
 	}else{
 		return '';
 	}
+}
+
+function createTaskResultText(task){
+	let resultText = '';
+	if (task.taskResult){
+		resultText = `${task.taskResult} at ${formatTime(task.resultDate)}`;
+	}
+	return resultText;
+}
+
+function renderTask(task){	
+	list.innerHTML += 
+	     `<li class="task ${task.priority} ${task.taskResult}" id=${task.id}>
+		     <label class="task-priority">${task.priority.toUpperCase().charAt(0)}</label>
+		     <input class="input hidden" type="text" onblur="editTask(this);" onchange="editTask(this);">
+		     <label class="task-text" onclick="showEditor(this);return false;">${task.text}</label>
+			 <input class="task-button" type="image" src="resourses/images/button_done.png" onclick="setResult(this, 'done');return false;">
+			 <input class="task-button" type="image" src="resourses/images/button_cancel.png" onclick="setResult(this, 'canceled');return false;">
+			 <input class="task-button" type="image" src="resourses/images/button_delete.png" onclick="taskDelete(this);return false;">
+			 <time class="task-creation-date" datetime="${task.creationDate}">${formatTime(task.creationDate)}</time>
+			 <time class="task-result-date" datetime="${task.resultDate}">${createTaskResultText(task)}</time>
+		 </li>`;
+		 
+	updateListHeight();
 }
 
 function createTask(taskData, taskId){
@@ -105,21 +145,7 @@ function createTask(taskData, taskId){
 		resultText = 'Canceled at ';
 	}
 	
-	list.innerHTML += 
-	     `<li class="task flex-container-row ${taskData.priority.toLowerCase()} ${taskData.taskResult.toLowerCase()}" id=${taskId}>
-		     <input class="input hidden" type="text" onblur="editTask(this);" onchange="editTask(this);">
-		     <label class="task-text" onclick="changeTask(this);return false;">${taskData.task}</label>
-			 <input class="task-button task-button-done" type="image" src="resourses/images/button_done.png" onclick="setDone(this);return false;">
-			 <input class="task-button task-button-cancel" type="image" src="resourses/images/button_cancel.png" onclick="setCanceled(this);return false;">
-			 <input class="task-button task-button-delete" type="image" src="resourses/images/button_delete.png" onclick="taskDelete(this);return false;">
-			 <time class="task-creation-date" datetime="${taskData.creationDate}">${formatTime(taskData.creationDate)}</time>
-			 <time class="task-result-date" datetime="${taskData.resultDate}">${resultText + formatTime(taskData.resultDate)}</time>
-		 </li>`;
-		 
-	updateListHeight();
 }
-
-let addForm = document.forms.addForm;
 
 addForm.addEventListener('submit', function (event){
 	event.preventDefault();
@@ -130,60 +156,58 @@ addForm.addEventListener('submit', function (event){
 	formData.append('resultDate', '');
 	formData.append('taskResult', '');
 	
-	let taskData = {};
+	let task = {};
 	formData.forEach(function(value, key){
-    taskData[key] = value;
+		if (key === 'priority'){
+			task[key] = value.toLowerCase();
+		}else{
+			task[key] = value;
+		}
 	});
 	
 	let formInput = addForm.querySelector('.form-input');
 	formInput.value = '';
 	
-	getPostResponse(taskData);
+	addTask(task);
 });
 
  document.addEventListener("DOMContentLoaded", function (){
-	 getGetResponse();
+	 getTasks();
  });
  
- function setDone(btn){
-	 let task = btn.closest('.task');
-	 
-	 task.classList.remove('canceled');
-	 task.classList.toggle('done');
-	 
-	 if(task.classList.contains('done')){
-		let now = new Date();
-		task.lastElementChild.setAttribute('datetime', now);
-		task.lastElementChild.textContent = `Done at ${formatTime(now)}`;
+ let lastResult = '';
+ function checkRepeat(result){
+	 let isRepeat = false;
+	 if(lastResult === result){
+		 isRepeat = true;
+		 lastResult = '';
 	 }else{
-		task.lastElementChild.setAttribute('datetime', '');
-		task.lastElementChild.textContent = '';
+		 lastResult = result;
 	 }
 	 
-	getPutResponse(task);
-};
-
-function setCanceled(btn){
-	let task = btn.closest('.task');
-	task.classList.remove('done');
-	task.classList.toggle('canceled');
-	
-	if(task.classList.contains('canceled')){
-		let now = new Date();
-		task.lastElementChild.setAttribute('datetime', now);
-		task.lastElementChild.textContent = `Canceled at ${formatTime(now)}`;
-	}else{
-		task.lastElementChild.setAttribute('datetime', '');
-		task.lastElementChild.textContent = '';
-	}
-	
-	getPutResponse(task);
+	 return isRepeat;
+ }
+ 
+ function setResult(btn, result) {
+	 let taskId = btn.closest('.task').getAttribute('id');
+	 let taskIndex = findTaskIndexById(taskId);
+	 
+	 if (!checkRepeat(result)){
+		 tasks[taskIndex].resultDate = new Date();
+		 tasks[taskIndex].taskResult = result;
+	 }else{
+		 tasks[taskIndex].resultDate = '';
+		 tasks[taskIndex].taskResult = '';
+	 }
+	 
+	 changeTask(tasks[taskIndex]);
 }
 
 function taskDelete(btn){
-	let task = btn.closest('.task');
-
-	getDeleteResponse(task)
+	let taskId = btn.closest('.task').getAttribute('id');
+	let task = findTaskIndexById(taskId);
+	
+	deleteTask(task);
 }
 
 function resetFilters(tasks){	
@@ -210,94 +234,20 @@ function filterList(){
 	}
 }
 
-function compareByDate(a, b){
-	a = new Date(a.querySelector('.task-creation-date').getAttribute('datetime'));
-	b = new Date(b.querySelector('.task-creation-date').getAttribute('datetime'));
+let desc = true;
+function sortByDate(){		
+	tasks.sort((a,b) => new Date(a.creationDate) - new Date(b.creationDate));
 	
-	if (a-b > 0) {
-		return 1;
-	}else if (a-b === 0){
-		return 0;
-	}else{
-		return -1;
-	}	
+	if (desc){
+		tasks.reverse();
+	}
+	
+	desc = !desc;
+	
+	updateList();
 }
 
-function sort(tasks, asc){
-	let sorted = false;
-	let buf;
-	
-	tasks = Array.from(tasks);
-	
-	while(!sorted){
-		sorted = true;
-
-		for (i = 0; i < tasks.length-1; i++){
-			if (compareByDate(tasks[i], tasks[i+1]) < 0){
-				sorted = false;
-				buf = tasks[i];
-				tasks[i] = tasks[i+1];
-				tasks[i+1] = buf;
-			}
-		}
-	}
-	
-	if (!asc){
-		tasks = tasks.reverse();
-	}
-	
-	return tasks;
-}
-
-let asc = true;
-function sortByDate(){
-	let tasks = document.querySelectorAll('.task');
-	
-	tasks = sort(tasks, asc); 
-	
-	list.innerHTML = '';
-	for (i = 0; i < tasks.length; i++){
-		list.append(tasks[i]);
-	}
-	
-	asc = !asc;
-}
-
-function taskToJson(task){
-	let obj = new Object();
-	
-	if (task.classList.length > 2){
-		for (let i = 2; i < task.classList.length; i++){
-			let property = task.classList[i];
-			if(property === 'low' || property === 'medium' || property === 'high'){
-				obj.priority = property;
-			}
-			
-			if(property === 'done' || property === 'canceled'){
-				obj.taskResult = property;
-			}
-		}
-	}
-	
-	let doesExistTaskResult = 'taskResult' in obj;
-	if(!doesExistTaskResult){
-		obj.taskResult = '';
-	}
-	
-	let taskText = task.querySelector('.task-text');
-	obj.task = taskText.textContent;
-	
-	let creationDate = task.querySelector('.task-creation-date');
-	obj.creationDate = creationDate.getAttribute('datetime');
-	
-	let resultDate = task.querySelector('.task-result-date');
-	obj.resultDate = resultDate.getAttribute('datetime');
-	
-	console.log(JSON.stringify(obj));
-	return JSON.stringify(obj);
-}
-
-function changeTask(label){
+function showEditor(label){
 	let task = label.closest('.task');
 	let input = task.querySelector('.input');
 	
@@ -308,16 +258,18 @@ function changeTask(label){
 }
 
 function editTask(input){
-	let task = input.closest('.task');
-	let label = task.querySelector('.task-text');
-	let oldLabel = label.textContent;
+	let taskId = input.closest('.task').getAttribute('id');
+	let taskIndex = findTaskIndexById(taskId);
+	
+	let label = input.closest('.task').querySelector('.task-text');
 	
 		if (input.value !== label.textContent){
 			let ans = confirm('Сохранить изменения?');
 			
 			if(ans){
-				label.textContent = input.value;
-				getPutResponse(task, label, oldLabel);
+				let newTask = Object.assign(tasks[taskIndex]);
+				newTask.text = input.value;
+				changeTask(newTask);
 			}
 		}
 		
