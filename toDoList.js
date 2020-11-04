@@ -1,12 +1,13 @@
 const addForm = document.forms.addForm;
-const filters = document.querySelectorAll('.filter-checkbox');
+const resultFilters = document.querySelectorAll('.filter-result');
+const priorityFilters = document.querySelectorAll('.filter-priority');
 const list = document.querySelector('.todolist');
 
 const tasks = [];
 
 function updateList(){
-	list.innerHTML = '';
 	for(let i = 0; i < tasks.length; i++){
+		list.removeChild(document.getElementById(tasks[i].id));
 		renderTask(tasks[i]);
 	}
 }
@@ -25,78 +26,62 @@ function updateListHeight() {
 }
 
 function findTaskIndexById(taskId){
-	let foundIndex = tasks.findIndex(item => item.id == taskId);
-	
-	return foundIndex;
+	return tasks.findIndex(item => item.id == taskId);
 }
 
-async function getTasks(){
-	let response = await fetch('http://127.0.0.1:3000/items');
-	
-	if (response.ok){
-		let content = await response.json();
-		
-		for(let key in content){
-			let task = content[key];
-			tasks.push(task);
-			renderTask(task);
-		}
-	}else{
-		alert('Ошибка при загрузке данных с сервера!');
-	}
+async function getTasks() {
+    fetch('http://127.0.0.1:3000/items')
+        .then(response => response.json())
+        .catch(() => alert('Ошибка при загрузке данных с сервера!'))
+        .then(response => response.forEach(task => {
+            tasks.push(task);
+            renderTask(task);
+        }));
 }
 
 async function addTask(task){
-	let response = await fetch('http://127.0.0.1:3000/items', {
+	fetch('http://127.0.0.1:3000/items', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json;charset=utf-8'
 		},
 		body: JSON.stringify(task)
-	});
-	
-
-	if (response.ok){
-		let result = await response.json();
-		let id = parseInt(result.id);
-		
-		task.id = id;
-		tasks.push(task);
-		renderTask(task);
-	}else{
-		alert('Ошибка!');
-	}
+	    })
+		.then(response => response.json())
+        .catch(() => alert('Ошибка при отправке данных на сервер!'))
+        .then(response => {
+			task.id = response.id;
+			tasks.push(task);
+			renderTask(task);
+		});
 }
 
-async function deleteTask(taskIndex){
-	let response = await fetch(`http://127.0.0.1:3000/items/${tasks[taskIndex].id}`, {
+async function deleteTask(task){
+	fetch(`http://127.0.0.1:3000/items/${task.id}`, {
 		method: 'DELETE',
-	});
-	
-	if (response.ok){
-		tasks.splice(taskIndex,1);
-		updateList();
-	}else{
-		alert('Ошибка!');
-	}
+		})
+        .then(response => response.json())
+        .catch(() => alert('Ошибка при удалении данных с сервера!'))
+        .then(response => {
+            tasks.splice(findTaskIndexById(task.id),1);
+			list.removeChild(document.getElementById(task.id));
+        });
 }
 
 async function changeTask(task){	
-	let response = await fetch(`http://127.0.0.1:3000/items/${task.id}`, {
+	fetch(`http://127.0.0.1:3000/items/${task.id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json;charset=utf-8'
 		},
 		body: JSON.stringify(task)
-	});
-	
-	if (response.ok){
-		let taskIndex =  findTaskIndexById(task.id);
-		tasks.splice(taskIndex,1,task);
-		updateList();
-	}else{
-		alert('Ошибка');
-	}
+		})
+        .then(response => response.json())
+        .catch(() => alert('Ошибка при изменении данных на сервере!'))
+        .then(response => {
+			tasks.splice(findTaskIndexById(task.id),1,task);
+			updateList();
+        });
 }
 
 function formatTime(datetime){
@@ -120,7 +105,7 @@ function renderTask(task){
 	list.innerHTML += 
 	     `<li class="task ${task.priority} ${task.taskResult}" id=${task.id}>
 		     <label class="task-priority">${task.priority.toUpperCase().charAt(0)}</label>
-		     <input class="input hidden" type="text" onblur="editTask(this);" onchange="editTask(this);">
+		     <input class="input hidden" type="text" onblur="hideEditor(this);">
 		     <label class="task-text" onclick="showEditor(this);return false;">${task.text}</label>
 			 <input class="task-button" type="image" src="resourses/images/button_done.png" onclick="setResult(this, 'done');return false;">
 			 <input class="task-button" type="image" src="resourses/images/button_cancel.png" onclick="setResult(this, 'canceled');return false;">
@@ -132,41 +117,20 @@ function renderTask(task){
 	updateListHeight();
 }
 
-function createTask(taskData, taskId){
-	if(!taskId){
-		taskId  = parseInt(taskData.id);
-	}
-	
-	let resultText = '';
-	
-	if (taskData.taskResult.toLowerCase() === 'done'){
-		resultText = 'Done at ';
-	}else if(taskData.taskResult.toLowerCase() === 'canceled'){
-		resultText = 'Canceled at ';
-	}
-	
-}
-
 addForm.addEventListener('submit', function (event){
 	event.preventDefault();
 	
-	let formData = new FormData(addForm);
-	let now = new Date();
-	formData.append('creationDate', now);
-	formData.append('resultDate', '');
-	formData.append('taskResult', '');
+	if (addForm.elements[0].value === '') {return;}
 	
-	let task = {};
-	formData.forEach(function(value, key){
-		if (key === 'priority'){
-			task[key] = value.toLowerCase();
-		}else{
-			task[key] = value;
-		}
-	});
+	let task = {
+		text: addForm.elements[0].value,
+		priority: addForm.elements[1].value.toLowerCase(),
+		creationDate: new Date(),
+		resultDate: '',
+		taskResult: '',
+	};
 	
-	let formInput = addForm.querySelector('.form-input');
-	formInput.value = '';
+	addForm.elements[0].value = '';
 	
 	addTask(task);
 });
@@ -175,39 +139,25 @@ addForm.addEventListener('submit', function (event){
 	 getTasks();
  });
  
- let lastResult = '';
- function checkRepeat(result){
-	 let isRepeat = false;
-	 if(lastResult === result){
-		 isRepeat = true;
-		 lastResult = '';
-	 }else{
-		 lastResult = result;
-	 }
-	 
-	 return isRepeat;
- }
- 
  function setResult(btn, result) {
 	 let taskId = btn.closest('.task').getAttribute('id');
-	 let taskIndex = findTaskIndexById(taskId);
+	 let newTask = Object.assign(tasks[findTaskIndexById(taskId)]);
 	 
-	 if (!checkRepeat(result)){
-		 tasks[taskIndex].resultDate = new Date();
-		 tasks[taskIndex].taskResult = result;
+	 if (newTask.taskResult !== result){
+		 newTask.resultDate = new Date();
+		 newTask.taskResult = result;
 	 }else{
-		 tasks[taskIndex].resultDate = '';
-		 tasks[taskIndex].taskResult = '';
+		 newTask.resultDate = '';
+		 newTask.taskResult = '';
 	 }
 	 
-	 changeTask(tasks[taskIndex]);
+	 changeTask(newTask);
 }
 
 function taskDelete(btn){
 	let taskId = btn.closest('.task').getAttribute('id');
-	let task = findTaskIndexById(taskId);
 	
-	deleteTask(task);
+	deleteTask(tasks[findTaskIndexById(taskId)]);
 }
 
 function resetFilters(tasks){	
@@ -216,22 +166,42 @@ function resetFilters(tasks){
 	}
 }
 
+function filter(tasks, filters, isStrict){
+	for (i = 0; i < tasks.length; i++){
+		let wasOneActiveFilter = false;
+		
+		let isSuitable = false;
+		if(isStrict){
+			isSuitable = true;
+		}
+		
+		for (j = 0; j < filters.length; j++){
+			if (filters[j].checked){
+				wasOneActiveFilter = true;
+				let filterParameter = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
+				
+				if (isStrict){
+					isSuitable = isSuitable && tasks[i].classList.contains(filterParameter);
+				} else {
+					isSuitable = isSuitable || tasks[i].classList.contains(filterParameter);
+				}
+			}
+		}
+		
+		if (wasOneActiveFilter){
+			if (!isSuitable){
+				tasks[i].classList.add('hidden');
+			}
+		}
+	}
+}
+
 function filterList(){	
     let tasks = list.querySelectorAll('.task');
 	
 	resetFilters(tasks);
-	
-	for (i = 0; i < tasks.length; i++){
-		for (j = 0; j < filters.length; j++){
-			if (filters[j].checked){
-				let filterParameter = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
-				
-				if(!tasks[i].classList.contains(filterParameter)){
-					tasks[i].classList.add('hidden');
-				}
-			}
-		}
-	}
+	filter(tasks, priorityFilters, false);
+	filter(tasks, resultFilters, true);
 }
 
 let desc = true;
@@ -254,16 +224,18 @@ function showEditor(label){
 	label.classList.add('hidden');
 	input.classList.remove('hidden');
 	input.value = label.textContent;
-	input.focus();
 }
 
-function editTask(input){
+function hideEditor(input){
 	let taskId = input.closest('.task').getAttribute('id');
 	let taskIndex = findTaskIndexById(taskId);
 	
 	let label = input.closest('.task').querySelector('.task-text');
 	
-		if (input.value !== label.textContent){
+	label.classList.remove('hidden');
+	input.classList.add('hidden');
+	
+	if (input.value !== label.textContent){
 			let ans = confirm('Сохранить изменения?');
 			
 			if(ans){
@@ -273,6 +245,5 @@ function editTask(input){
 			}
 		}
 		
-		label.classList.remove('hidden');
-		input.classList.add('hidden');
-	}
+	input.value = '';
+}

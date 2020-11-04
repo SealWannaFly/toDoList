@@ -52,7 +52,7 @@
 }
 
 .datefilter-button-sort{
-	width: 50%;
+	width: 30%;
 }
 
 .datefilter{
@@ -64,7 +64,11 @@
 	margin: 5% 1%;
 }
 
-.filter-checkbox{
+.filter-result{
+	padding: 1%;
+}
+
+.filter-priority{
 	padding: 1%;
 }
 
