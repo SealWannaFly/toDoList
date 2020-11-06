@@ -1,0 +1,34 @@
+function filter(suitableTasks, filters, isStrict){
+	let i = 0;
+	
+	while (i < suitableTasks.length){
+		let wasOneActiveFilter = false;
+		
+		let task = tasks[suitableTasks[i]];
+		//Для строгого фильтра начальное значение true(Логический фильтр И), а для нестрогого false (Логический фильтр ИЛИ)
+		let isSuitable = isStrict;
+		
+		for (j = 0; j < filters.length; j++){
+			if (filters[j].checked){
+				wasOneActiveFilter = true;
+				let filterField = filters[j].getAttribute('name');
+				let filterParameter = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
+				
+				if (isStrict){
+					isSuitable = isSuitable && (task[filterField] === filterParameter);
+				} else {
+					isSuitable = isSuitable || (task[filterField] === filterParameter);
+				}
+			}
+		}
+		
+		if (wasOneActiveFilter){
+			if (!isSuitable){
+				suitableTasks.splice(i,1);
+				i--;
+			}
+		}
+		
+		i++;
+	}
+}

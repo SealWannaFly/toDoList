@@ -5,10 +5,17 @@ const list = document.querySelector('.todolist');
 
 const tasks = [];
 
-function updateList(){
-	for(let i = 0; i < tasks.length; i++){
-		list.removeChild(document.getElementById(tasks[i].id));
-		renderTask(tasks[i]);
+function clearList(){
+	list.querySelectorAll('.task').forEach((task) => list.removeChild(task));
+}
+
+function updateList(indexArray){
+	clearList();
+	
+	if (indexArray){
+		indexArray.forEach((taskIndex) => renderTask(tasks[taskIndex]));
+	} else {
+		tasks.forEach((task) => renderTask(task));
 	}
 }
 
@@ -37,6 +44,8 @@ async function getTasks() {
             tasks.push(task);
             renderTask(task);
         }));
+	
+	updateListHeight();
 }
 
 async function addTask(task){
@@ -50,9 +59,9 @@ async function addTask(task){
 		.then(response => response.json())
         .catch(() => alert('Ошибка при отправке данных на сервер!'))
         .then(response => {
-			task.id = response.id;
-			tasks.push(task);
-			renderTask(task);
+			tasks.push(response);
+			renderTask(response);
+			filterList();
 		});
 }
 
@@ -65,6 +74,7 @@ async function deleteTask(task){
         .then(response => {
             tasks.splice(findTaskIndexById(task.id),1);
 			list.removeChild(document.getElementById(task.id));
+			filterList();
         });
 }
 
@@ -79,8 +89,9 @@ async function changeTask(task){
         .then(response => response.json())
         .catch(() => alert('Ошибка при изменении данных на сервере!'))
         .then(response => {
-			tasks.splice(findTaskIndexById(task.id),1,task);
+			tasks.splice(findTaskIndexById(response.id),1,response);
 			updateList();
+			filterList();
         });
 }
 
@@ -160,61 +171,66 @@ function taskDelete(btn){
 	deleteTask(tasks[findTaskIndexById(taskId)]);
 }
 
-function resetFilters(tasks){	
-	for (i = 0; i < tasks.length; i++){
-		tasks[i].classList.remove('hidden');
-	}
-}
-
-function filter(tasks, filters, isStrict){
-	for (i = 0; i < tasks.length; i++){
+function filter(suitableTasks, filters, isStrict){
+	let i = 0;
+	
+	while (i < suitableTasks.length){
 		let wasOneActiveFilter = false;
 		
-		let isSuitable = false;
-		if(isStrict){
-			isSuitable = true;
-		}
+		let task = tasks[suitableTasks[i]];
+		//Для строгого фильтра начальное значение true(Логический фильтр И), а для нестрогого false (Логический фильтр ИЛИ)
+		let isSuitable = isStrict;
 		
 		for (j = 0; j < filters.length; j++){
 			if (filters[j].checked){
 				wasOneActiveFilter = true;
-				let filterParameter = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
+				let filterName = document.querySelector(`[for="${filters[j].id}"]`).getAttribute('name');
+				let filterValue = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
 				
 				if (isStrict){
-					isSuitable = isSuitable && tasks[i].classList.contains(filterParameter);
+					isSuitable = isSuitable && (task[filterName] === filterValue);
 				} else {
-					isSuitable = isSuitable || tasks[i].classList.contains(filterParameter);
+					isSuitable = isSuitable || (task[filterName] === filterValue);
 				}
 			}
 		}
 		
 		if (wasOneActiveFilter){
 			if (!isSuitable){
-				tasks[i].classList.add('hidden');
+				suitableTasks.splice(i--,1);
 			}
 		}
+		
+		i++;
 	}
 }
 
-function filterList(){	
-    let tasks = list.querySelectorAll('.task');
-	
-	resetFilters(tasks);
-	filter(tasks, priorityFilters, false);
-	filter(tasks, resultFilters, true);
+function filterList(){		
+	let suitableTasks = [];
+	//Массив индексов
+	for (let i = 0; i < tasks.length; i++){
+		suitableTasks.push(i);
+	}
+	//Удаляем индексы не подходящих элементов
+	filter(suitableTasks, resultFilters, true);
+	filter(suitableTasks, priorityFilters, false);
+	//Отрисовываем подходящие элементы
+	updateList(suitableTasks);
 }
 
-let desc = true;
+let asc = true;
 function sortByDate(){		
-	tasks.sort((a,b) => new Date(a.creationDate) - new Date(b.creationDate));
 	
-	if (desc){
-		tasks.reverse();
+	if (asc){
+		tasks.sort((a,b) => new Date(b.creationDate) - new Date(a.creationDate));
+	} else {
+		tasks.sort((a,b) => new Date(a.creationDate) - new Date(b.creationDate));
 	}
 	
-	desc = !desc;
+	asc = !asc;
 	
 	updateList();
+	filterList();
 }
 
 function showEditor(label){
