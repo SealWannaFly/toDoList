@@ -184,13 +184,13 @@ function filter(suitableTasks, filters, isStrict){
 		for (j = 0; j < filters.length; j++){
 			if (filters[j].checked){
 				wasOneActiveFilter = true;
-				let filterName = document.querySelector(`[for="${filters[j].id}"]`).getAttribute('name');
+				let fieldName = document.querySelector(`[for="${filters[j].id}"]`).getAttribute('name');
 				let filterValue = document.querySelector(`[for="${filters[j].id}"]`).textContent.toLowerCase();
 				
 				if (isStrict){
-					isSuitable = isSuitable && (task[filterName] === filterValue);
+					isSuitable = isSuitable && (task[fieldName] === filterValue);
 				} else {
-					isSuitable = isSuitable || (task[filterName] === filterValue);
+					isSuitable = isSuitable || (task[fieldName] === filterValue);
 				}
 			}
 		}
