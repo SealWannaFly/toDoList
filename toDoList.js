@@ -1,6 +1,6 @@
 const addForm = document.forms.addForm;
-const resultFilters = document.querySelectorAll('.filter-result');
-const priorityFilters = document.querySelectorAll('.filter-priority');
+const strictFilters = document.querySelectorAll('.strict');
+const notStrictFilters = document.querySelectorAll('.notStrict');
 const list = document.querySelector('.todolist');
 
 const tasks = [];
@@ -212,8 +212,8 @@ function filterList(){
 		suitableTasks.push(i);
 	}
 	//Удаляем индексы не подходящих элементов
-	filter(suitableTasks, resultFilters, true);
-	filter(suitableTasks, priorityFilters, false);
+	filter(suitableTasks, strictFilters, true);
+	filter(suitableTasks, notStrictFilters, false);
 	//Отрисовываем подходящие элементы
 	updateList(suitableTasks);
 }

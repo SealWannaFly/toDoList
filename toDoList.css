@@ -46,9 +46,12 @@
 	margin-top: 1%;
 }
 
+.resultfilters{
+	width: 30%;
+}
+
 .priorityfilters{
-	width: 79%;
-	padding: 1%;
+	width: 50%;
 }
 
 .datefilter-button-sort{
@@ -86,7 +89,7 @@
 
 .todolist li {
 	flex: 1 1 auto;
-	margin: % 5%;
+	margin: 1% 2%;
 	padding: 5% 1%;
 }
 
